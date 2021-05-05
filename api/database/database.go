@@ -7,7 +7,7 @@ import (
 )
 
 func New() *sql.DB {
-	DbConn, err := sql.Open("mysql", "root:password123@tcp(db)/phonebookdb")
+	DbConn, err := sql.Open("mysql", "root:password123@tcp(dbc)/phonebookdb")
 	if err != nil {
 		log.Fatal(err)
 	}

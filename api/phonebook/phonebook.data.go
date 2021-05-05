@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"log"
+	"net/url"
 	"time"
 )
 
@@ -26,38 +27,6 @@ func insert(phoneBook Phonebook, db *sql.DB, timeout int) (int, error) {
 		return 0, nil
 	}
 	return int(insertID), nil
-}
-
-func list(db *sql.DB, timeout int) ([]Phonebook, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
-	defer cancel()
-	results, err := db.QueryContext(ctx,
-		`SELECT 
-		phonebookId,
-		name,
-		email,
-		phone
-		FROM phonebooks`)
-
-	if err != nil {
-		return nil, err
-	}
-	defer results.Close()
-
-	phonebooks := make([]Phonebook, 0)
-
-	for results.Next() {
-		var phonebook Phonebook
-		results.Scan(
-			&phonebook.PhonebookID,
-			&phonebook.Name,
-			&phonebook.Email,
-			&phonebook.Phone)
-
-		phonebooks = append(phonebooks, phonebook)
-	}
-
-	return phonebooks, nil
 }
 
 func get(phonebookID int, db *sql.DB, timeout int) (*Phonebook, error) {
@@ -115,6 +84,43 @@ func update(phonebook Phonebook, db *sql.DB, timeout int) error {
 	}
 	return nil
 }
+
+func list(query url.Values, db *sql.DB, timeout int) ([]Phonebook, error) {
+  if query["name"] != nil {
+    return searchForName(query.Get("name"), db, timeout)
+  }
+  
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
+	defer cancel()
+	results, err := db.QueryContext(ctx,
+		`SELECT 
+		phonebookId,
+		name,
+		email,
+		phone
+		FROM phonebooks`)
+
+	if err != nil {
+		return nil, err
+	}
+	defer results.Close()
+
+	phonebooks := make([]Phonebook, 0)
+
+	for results.Next() {
+		var phonebook Phonebook
+		results.Scan(
+			&phonebook.PhonebookID,
+			&phonebook.Name,
+			&phonebook.Email,
+			&phonebook.Phone)
+
+		phonebooks = append(phonebooks, phonebook)
+	}
+
+	return phonebooks, nil
+}
+
 
 func searchForName(name string, db *sql.DB, timeout int) ([]Phonebook, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)

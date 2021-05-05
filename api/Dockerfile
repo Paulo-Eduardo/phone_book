@@ -17,6 +17,9 @@ RUN go mod download
 # Copy the code into the container
 COPY . .
 
+# Run test
+RUN go test ./...
+
 # Build the application
 RUN go build -o main .
 
