@@ -32,13 +32,7 @@ func insert(phoneBook Phonebook, db *sql.DB, timeout int) (int, error) {
 func get(phonebookID int, db *sql.DB, timeout int) (*Phonebook, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
 	defer cancel()
-	row := db.QueryRowContext(ctx, `SELECT 
-	phonebookId,
-	name,
-	phone,
-	email
-	FROM phonebooks
-	WHERE phonebookId = ?`, phonebookID)
+	row := db.QueryRowContext(ctx, "SELECT phonebookId, name, phone, email FROM phonebooks WHERE phonebookId = ?", phonebookID)
 
 	phonebook := &Phonebook{}
 	err := row.Scan(
@@ -86,10 +80,10 @@ func update(phonebook Phonebook, db *sql.DB, timeout int) error {
 }
 
 func list(query url.Values, db *sql.DB, timeout int) ([]Phonebook, error) {
-  if query["name"] != nil {
-    return searchForName(query.Get("name"), db, timeout)
-  }
-  
+	if query["name"] != nil {
+		return searchForName(query.Get("name"), db, timeout)
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
 	defer cancel()
 	results, err := db.QueryContext(ctx,
@@ -120,7 +114,6 @@ func list(query url.Values, db *sql.DB, timeout int) ([]Phonebook, error) {
 
 	return phonebooks, nil
 }
-
 
 func searchForName(name string, db *sql.DB, timeout int) ([]Phonebook, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
