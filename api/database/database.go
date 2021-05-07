@@ -2,12 +2,14 @@ package database
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
+	"os"
 	"time"
 )
 
 func New() *sql.DB {
-	DbConn, err := sql.Open("mysql", "root:password123@tcp(localhost:3306)/phonebookdb")
+	DbConn, err := sql.Open("mysql", fmt.Sprintf("root:password123@tcp(%s)/phonebookdb", os.Getenv("DB_HOST")))
 	if err != nil {
 		log.Fatal(err)
 	}
