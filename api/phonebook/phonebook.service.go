@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -35,13 +36,14 @@ func phonebooksHandler(w http.ResponseWriter, r *http.Request) {
 		var err error
 		phonebookList, err = list(r.URL.Query(), db, timeout)
 		if err != nil {
-      log.Printf("An error accured trying to list user: %v", err)
+			log.Printf("An error accured trying to list user: %v", err)
+			io.WriteString(w, err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 		phonebooksJson, err := json.Marshal(phonebookList)
 		if err != nil {
-      log.Printf("An error accured trying parse the list of users: %v", err)
+			log.Printf("An error accured trying parse the list of users: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
@@ -53,31 +55,31 @@ func phonebooksHandler(w http.ResponseWriter, r *http.Request) {
 		var newPhonebook Phonebook
 		bodyBytes, err := ioutil.ReadAll(r.Body)
 		if err != nil {
-      log.Printf("An error accured trying to read the body: %v", err)
+			log.Printf("An error accured trying to read the body: %v", err)
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 		err = json.Unmarshal(bodyBytes, &newPhonebook)
 		if err != nil {
-      log.Printf("An error accured trying to parse the body: %v", err)
+			log.Printf("An error accured trying to parse the body: %v", err)
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 		if newPhonebook.PhonebookID != 0 {
-      log.Printf("User passed a body with ID")
+			log.Printf("User passed a body with ID")
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 		id, err := insert(newPhonebook, db, timeout)
 		if err != nil {
-      log.Printf("An error accured trying to insert the item in the database: %v", err)
+			log.Printf("An error accured trying to insert the item in the database: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
 		jsonId, err := json.Marshal(id)
 		if err != nil {
-      log.Printf("An error accured trying to parse the result id: %v", err)
+			log.Printf("An error accured trying to parse the result id: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
@@ -94,20 +96,20 @@ func phonebookHandler(w http.ResponseWriter, r *http.Request) {
 	urlPathSegments := strings.Split(r.URL.Path, "phonebooks/")
 	phonebookID, err := strconv.Atoi(urlPathSegments[len(urlPathSegments)-1])
 	if err != nil {
-    log.Printf("An error accured trying to parse the query id: %v", err)
+		log.Printf("An error accured trying to parse the query id: %v", err)
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 	phonebook, err := get(phonebookID, db, timeout)
 
 	if err != nil {
-    log.Printf("An error accured trying to get the item from id: %v", err)
+		log.Printf("An error accured trying to get the item from id: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	if phonebook == nil {
-    log.Printf("An error accured trying to parse the query id: %v", err)
+		log.Printf("An error accured trying to parse the query id: %v", err)
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
@@ -116,7 +118,7 @@ func phonebookHandler(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 		phonebookJSON, err := json.Marshal(phonebook)
 		if err != nil {
-      log.Printf("An error accured trying to parse the phonebook: %v", err)
+			log.Printf("An error accured trying to parse the phonebook: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
@@ -126,32 +128,38 @@ func phonebookHandler(w http.ResponseWriter, r *http.Request) {
 		var updatedPhonebook Phonebook
 		bodyBytes, err := ioutil.ReadAll(r.Body)
 		if err != nil {
-      log.Printf("An error accured trying to read the body: %v", err)
+			log.Printf("An error accured trying to read the body: %v", err)
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 		err = json.Unmarshal(bodyBytes, &updatedPhonebook)
 		if err != nil {
-      log.Printf("An error accured trying to parse the body: %v", err)
+			log.Printf("An error accured trying to parse the body: %v", err)
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 		if updatedPhonebook.PhonebookID != phonebookID {
-      log.Printf("An error accured, user trying to update but ID didn't match")
+			log.Printf("An error accured, user trying to update but ID didn't match")
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 
 		err = update(updatedPhonebook, db, timeout)
 		if err != nil {
-      log.Printf("An error accured trying to update phonebook: %v", err)
+			log.Printf("An error accured trying to update phonebook: %v", err)
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 		w.WriteHeader(http.StatusOK)
 		return
 	case http.MethodDelete:
-		remove(phonebookID, db, timeout)
+		if err := remove(phonebookID, db, timeout); err != nil {
+			log.Printf("An error accured trying to update phonebook: %v", err)
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		return
 	case http.MethodOptions:
 		return
 	default:

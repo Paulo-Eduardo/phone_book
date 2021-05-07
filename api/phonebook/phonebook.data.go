@@ -122,8 +122,8 @@ func searchForName(name string, db *sql.DB, timeout int) ([]Phonebook, error) {
 	results, err := db.QueryContext(ctx, `SELECT
 	phonebookId,
 	name,
-	phone,
-	email
+  email,
+	phone
 	FROM phonebooks
 	WHERE name LIKE ?`, "%"+name+"%")
 

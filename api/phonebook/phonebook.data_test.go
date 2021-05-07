@@ -104,7 +104,7 @@ func TestShouldListPhonebooksByName(t *testing.T) {
 	db, mock := NewMock()
 	defer db.Close()
 
-	query := "SELECT phonebookId, name, phone, email FROM phonebooks WHERE name LIKE \\?"
+	query := "SELECT phonebookId, name, email, phone FROM phonebooks WHERE name LIKE \\?"
 
 	rows := sqlmock.NewRows([]string{"id", "name", "phone", "email"}).
 		AddRow("1", "Nayara", "47996623579", "nay.maggioni@gmail.com")
