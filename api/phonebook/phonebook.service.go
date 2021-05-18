@@ -100,6 +100,7 @@ func phonebookHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
+
 	phonebook, err := get(phonebookID, db, timeout)
 
 	if err != nil {
